@@ -51,7 +51,7 @@ ADD files/plugins.ini /opt/hlds/valve/addons/metamod/plugins.ini
 RUN mkdir -p /opt/hlds/valve/addons/dproto
 ADD files/dproto_i386.so /opt/hlds/valve/addons/dproto/dproto_i386.so
 ADD files/dproto.cfg /opt/hlds/valve/dproto.cfg
-
+COPY files/dproto_i386.so /opt/hlds/cstrike/addons/dproto/dproto_i386.so
 # Install AMX mod X
 RUN curl -sqL "https://www.amxmodx.org/release/amxmodx-$amxmod_version-base-linux.tar.gz" | tar -C /opt/hlds/valve/ -zxvf -
 ADD files/maps.ini /opt/hlds/valve/addons/amxmodx/configs/maps.ini
