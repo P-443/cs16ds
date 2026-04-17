@@ -4,7 +4,7 @@ LABEL maintainer="Tomas Adomavicius <tomas@adomavicius.com>"
 
 ARG steam_user=anonymous
 ARG steam_password=
-ARG metamod_version=1.20
+ARG metamod_version=1.21p38
 ARG amxmod_version=1.8.2
 
 # تنصيب الحزم اللازمة
@@ -34,37 +34,36 @@ RUN ln -s /opt/steam/ /opt/hlds/steamcmd
 ADD files/steam_appid.txt /opt/hlds/steam_appid.txt
 ADD hlds_run.sh /bin/hlds_run.sh
 
-# إصلاح ملف التشغيل (تنظيف الـ Windows line endings)
+# إصلاح ملف التشغيل
 RUN sed -i 's/\r$//' /bin/hlds_run.sh && chmod +x /bin/hlds_run.sh
 
-# إضافة الخرائط لمجلد valve و cstrike لضمان وجودها
-ADD maps/* /opt/hlds/valve/maps/
-RUN mkdir -p /opt/hlds/cstrike/maps && cp /opt/hlds/valve/maps/* /opt/hlds/cstrike/maps/ || :
-
-# --- إعداد Metamod ---
+# --- إعداد المجلدات ---
 RUN mkdir -p /opt/hlds/cstrike/addons/metamod/dlls && \
-    curl -sqL "https://github.com/theAsmodai/metamod-p/releases/download/v1.21p38/metamod_i386.so" -o /opt/hlds/cstrike/addons/metamod/dlls/metamod.so
+    mkdir -p /opt/hlds/cstrike/addons/dproto && \
+    mkdir -p /opt/hlds/cstrike/maps
 
-# إضافة ملفات الإعدادات لمجلد cstrike (لأن السيرفر يعمل بـ -game cstrike)
+# --- تحميل Metamod (تم إضافة -L لضمان التحميل الصحيح) ---
+RUN curl -sqL "https://github.com/theAsmodai/metamod-p/releases/download/v1.21p38/metamod_i386.so" -o /opt/hlds/cstrike/addons/metamod/dlls/metamod.so
+
+# إضافة الخرائط
+ADD maps/* /opt/hlds/cstrike/maps/
+
+# إضافة ملفات الإعدادات (تأكد أن الملفات موجودة في مجلد files في GitHub)
 ADD files/liblist.gam /opt/hlds/cstrike/liblist.gam
 ADD files/plugins.ini /opt/hlds/cstrike/addons/metamod/plugins.ini
-
-# --- إعداد dproto ---
-RUN mkdir -p /opt/hlds/cstrike/addons/dproto
 ADD files/dproto_i386.so /opt/hlds/cstrike/addons/dproto/dproto_i386.so
 ADD files/dproto.cfg /opt/hlds/cstrike/dproto.cfg
 
 # --- إعداد AMX Mod X ---
-# يتم فكه داخل cstrike مباشرة
 RUN curl -sqL "https://www.amxmodx.org/release/amxmodx-$amxmod_version-base-linux.tar.gz" | tar -C /opt/hlds/cstrike/ -zxvf -
 ADD files/maps.ini /opt/hlds/cstrike/addons/amxmodx/configs/maps.ini
 
-# تأكد من أن liblist.gam يشير لـ metamod
+# التأكد من تفعيل Metamod في liblist.gam
 RUN sed -i 's/gamedll_linux "dlls\/cs.so"/gamedll_linux "addons\/metamod\/dlls\/metamod.so"/g' /opt/hlds/cstrike/liblist.gam
 
 WORKDIR /opt/hlds
 
-# إعطاء صلاحيات للمكتبات
+# صلاحيات التنفيذ للمكتبات
 RUN chmod +x /opt/hlds/cstrike/addons/metamod/dlls/metamod.so && \
     chmod +x /opt/hlds/cstrike/addons/dproto/dproto_i386.so
 
